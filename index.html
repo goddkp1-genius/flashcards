@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="표현 카드">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#ffd23f" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1d1a12" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<title>원어민 표현 카드</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Gaegu:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* VOICE everyday study tool, friendly but tidy
+   IDEA the ring-bound index-card vocab deck Korean students carry: marigold cover, ruled cards, red margin line
+   PICTURE the live study card, large, flipping, with a stack of cards behind it
+   COLOUR marigold ground, ballpoint blue support, red margin accent, warm white card; night = same deck under a desk lamp
+   TYPE DM Serif Display for English expressions, Gaegu for handwritten Korean notes, Noto Sans KR for UI
+   LAYOUT laptop: title + stats across the top, card left with Leitner boxes beside it; phone: title, card, buttons, boxes */
+:root{color-scheme:light dark;--bg:light-dark(#ffd23f,#1d1a12);--ink:light-dark(#1a1606,#f5ecd0);--card:light-dark(#fffdf6,#2b271c);--panel:light-dark(#fff7d6,#25211a);--rule:light-dark(#c9dbf2,#3a4560);--red:light-dark(#e0393b,#ff6f6f);--blue:light-dark(#1f45c7,#93a9ff);--muted:light-dark(#5e5332,#b8ac8a);--line:light-dark(#e3c45a,#3d3626);--m:58px}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.55 "Noto Sans KR",-apple-system,"Apple SD Gothic Neo",system-ui,sans-serif;overflow-x:clip;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%}
+button,.card{touch-action:manipulation}
+.band{padding-block:clamp(20px,3vw,40px);padding-left:max(5vw,16px,env(safe-area-inset-left,0px));padding-right:max(5vw,16px,env(safe-area-inset-right,0px))}
+.band:first-child{padding-top:max(clamp(20px,3vw,40px),calc(env(safe-area-inset-top,0px) + 12px))}
+.lower{padding-bottom:max(40px,calc(env(safe-area-inset-bottom,0px) + 24px))}
+.wrap{max-width:1180px;margin:0 auto}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:0;border-radius:10px;min-height:44px;padding:0 16px;background:var(--card);font-weight:500}
+button:focus-visible,input:focus-visible,textarea:focus-visible,.card:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+header{display:flex;flex-wrap:wrap;gap:16px 40px;align-items:end;justify-content:space-between;margin-bottom:22px}
+h1{font:700 clamp(32px,4.4vw,46px)/1.05 "Noto Sans KR",sans-serif;letter-spacing:-.03em;margin:0 0 6px;text-wrap:balance}
+.sub{margin:0;color:var(--muted)}
+.stats{display:flex;gap:28px;flex-wrap:wrap}
+.stat b{display:block;font:400 clamp(30px,3.4vw,40px)/1 "DM Serif Display",serif;font-variant-numeric:tabular-nums}
+.stat span{font-size:14px;color:var(--muted)}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:28px;align-items:start}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:16px;scrollbar-width:thin}
+.chip{flex:none;background:transparent;border:2px solid var(--ink);border-radius:999px;min-height:40px;padding:0 14px;font-size:15px}
+.chip[aria-pressed=true]{background:var(--ink);color:var(--bg)}
+.stage{position:relative;perspective:1600px;height:clamp(340px,48vh,410px)}
+.stage::before,.stage::after{content:"";position:absolute;inset:0;border-radius:14px;background:var(--card);box-shadow:0 1px 0 rgba(0,0,0,.12)}
+.stage::before{transform:rotate(-2.6deg) translate(-6px,8px);filter:brightness(.93)}
+.stage::after{transform:rotate(1.6deg) translate(5px,4px);filter:brightness(.97)}
+.card{position:absolute;inset:0;z-index:1;transform-style:preserve-3d;transition:transform .55s cubic-bezier(.2,.75,.25,1);cursor:pointer;border-radius:14px}
+.card.flip{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:14px;padding:26px 26px 22px calc(var(--m) + 22px);display:flex;flex-direction:column;overflow:auto;background-color:var(--card);background-image:linear-gradient(90deg,transparent var(--m),var(--red) var(--m),var(--red) calc(var(--m) + 2px),transparent calc(var(--m) + 2px)),repeating-linear-gradient(180deg,transparent 0 35px,var(--rule) 35px 36px);background-position:0 0,0 12px;box-shadow:0 2px 0 rgba(0,0,0,.1),0 22px 40px -24px rgba(70,45,0,.55)}
+.face::before{content:"";position:absolute;left:calc(var(--m)/2 - 10px);top:20px;width:20px;height:20px;border-radius:50%;background:var(--bg);box-shadow:inset 0 2px 3px rgba(0,0,0,.35)}
+.back{transform:rotateY(180deg)}
+.tag{font-size:14px;color:var(--muted);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.lv{display:inline-flex;gap:3px}.lv i{width:8px;height:8px;border-radius:50%;background:var(--rule)}.lv i.on{background:var(--blue)}
+.big{font:400 clamp(32px,5.2vw,52px)/1.08 "DM Serif Display",serif;letter-spacing:-.01em;margin:auto 0 10px;text-wrap:balance;overflow-wrap:anywhere}
+.e2{font:400 22px/1.3 "DM Serif Display",serif;margin-top:10px}
+.ko{font:700 clamp(30px,4.4vw,42px)/1.15 Gaegu,"Noto Sans KR",cursive;color:var(--blue);margin:2px 0 10px;text-wrap:balance}
+.koBig{font:700 clamp(34px,5vw,50px)/1.1 Gaegu,cursive;color:var(--blue);margin:auto 0 10px;text-wrap:balance}
+.ex{margin:6px 0 0;font-size:17px}
+.ex .e{font-family:"DM Serif Display",serif;font-size:20px;line-height:1.35}
+.ex .k{display:block;color:var(--muted);font-size:15px}
+.note{margin:auto 0 0;padding-top:12px;font:400 19px/1.35 Gaegu,cursive;color:var(--red)}
+.hint{margin:auto 0 0;font-size:14px;color:var(--muted)}
+.say{display:inline-flex;align-items:center;gap:6px;background:transparent;border:1.5px solid var(--rule);min-height:38px;padding:0 12px;font-size:14px;align-self:flex-start}
+.say svg{width:16px;height:16px}
+.say.mini{min-height:32px;padding:0 8px;vertical-align:middle;margin-left:6px}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:28px}
+#add .row,details .row{margin-top:8px}
+.row button{flex:1 1 0;min-height:56px;font-size:16px;line-height:1.2}
+.row small{display:block;font-size:13px;font-weight:400;opacity:.8}
+.g1{background:var(--red);color:#fff}.g2{background:var(--card)}.g3{background:var(--blue);color:light-dark(#fff,#111a3a)}
+.reveal{background:var(--ink);color:var(--bg)}
+.under{display:flex;gap:12px;justify-content:space-between;flex-wrap:wrap;margin-top:12px;font-size:14px;color:var(--muted)}
+.link{background:none;min-height:36px;padding:0 4px;text-decoration:underline;text-underline-offset:3px;color:var(--ink);font-weight:400;font-size:14px}
+.link:disabled{opacity:.4;cursor:default}
+.done{position:absolute;inset:0;z-index:1;border-radius:14px;background:var(--card);display:flex;flex-direction:column;justify-content:center;gap:10px;padding:28px calc(var(--m) + 22px)}
+.done h2{font:400 40px/1.1 "DM Serif Display",serif;margin:0}
+.side{background:var(--panel);border-radius:14px;padding:20px}
+.side h3,.panel h3{font-size:17px;margin:0 0 12px}
+.box{display:grid;grid-template-columns:5.5em minmax(0,1fr) 2.4em;gap:10px;align-items:center;font-size:14px;margin-bottom:8px}
+.bar{height:14px;background:color-mix(in srgb,var(--rule) 45%,transparent);border-radius:7px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--blue);border-radius:7px;transition:width .4s}
+.box b{text-align:right;font-variant-numeric:tabular-nums}
+.seg{display:flex;border:2px solid var(--ink);border-radius:12px;overflow:hidden;margin:18px 0 8px}
+.seg button{flex:1;border-radius:0;background:transparent;font-size:14px;min-height:42px;padding:0 6px}
+.seg button[aria-pressed=true]{background:var(--ink);color:var(--bg)}
+.keys{font-size:14px;color:var(--muted);margin:14px 0 0;line-height:1.8}
+kbd{font:500 12px/1 "Noto Sans KR",sans-serif;border:1.5px solid var(--muted);border-radius:5px;padding:2px 6px}
+.lower{background:var(--panel)}
+.cols{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:32px;align-items:start}
+.panel h2{font:400 32px/1.1 "DM Serif Display",serif;margin:0 0 14px}
+input,textarea{width:100%;font-size:16px;border:1.5px solid var(--line);background:var(--card);border-radius:10px;padding:10px 12px}
+label{display:block;font-size:14px;font-weight:500;margin:10px 0 4px}
+#q{margin-bottom:10px}
+.list{max-height:560px;overflow:auto;border-top:1.5px solid var(--line)}
+.item{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) auto auto;gap:12px;align-items:center;padding:10px 2px;border-bottom:1px solid var(--line)}
+.item .e{font-family:"DM Serif Display",serif;font-size:18px;line-height:1.25}
+.item .k{font-size:14px;color:var(--muted)}
+.item .acts{display:flex;gap:4px}
+.item .acts button{min-height:36px;padding:0 10px;font-size:13px;background:var(--card)}
+.empty{padding:20px 0;color:var(--muted)}
+.ok{color:var(--blue);font-size:14px;min-height:1.5em;margin:6px 0 0}
+details{margin-top:24px;border-top:1.5px solid var(--line);padding-top:14px}
+summary{cursor:pointer;font-weight:500;min-height:32px}
+.primary{background:var(--ink);color:var(--bg);margin-top:14px;width:100%}
+.foot{font-size:14px;color:var(--muted);margin-top:22px}
+@media(max-width:900px){.grid{grid-template-columns:minmax(0,1fr)}.side{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 24px}.side .seg{margin-top:0}}
+@media(max-width:760px){.cols{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:600px){:root{--m:40px}.stage{height:380px}.face{padding:22px 18px 18px calc(var(--m) + 16px)}.side{display:block}.item{grid-template-columns:minmax(0,1fr) auto}.item .k{grid-column:1}.item .lv{display:none}.stats{gap:20px}}
+@media(prefers-reduced-motion:reduce){.card{transition:none}.bar i{transition:none}}
+</style>
+</head>
+<body>
+<section class="band">
+<div class="wrap">
+<header>
+<div>
+<h1>원어민 표현 카드</h1>
+<p class="sub">미국·영국 사람들이 매일 쓰는 짧은 표현을, 잊을 때쯤 다시 보여주는 간격 반복으로 외워요.</p>
+</div>
+<div class="stats">
+<div class="stat"><b id="sDue">0</b><span>오늘 남은 카드</span></div>
+<div class="stat"><b id="sKnown">0</b><span>익힌 표현</span></div>
+<div class="stat"><b id="sStreak">0</b><span>연속 학습일</span></div>
+</div>
+</header>
+<div class="grid">
+<div>
+<div class="chips" id="chips" role="toolbar" aria-label="카테고리"></div>
+<div class="stage" id="stage"></div>
+<div class="row" id="actions"></div>
+<div class="under"><span id="pos"></span><span><button class="link" id="undo" disabled>되돌리기</button> <button class="link" id="shuffle">섞기</button></span></div>
+</div>
+<aside class="side">
+<div>
+<h3>단계별 카드</h3>
+<div id="boxes"></div>
+</div>
+<div>
+<div class="seg" role="group" aria-label="카드 방향">
+<button id="dirEn" aria-pressed="true">영어 → 뜻</button>
+<button id="dirKo" aria-pressed="false">뜻 → 영어</button>
+</div>
+<p class="keys"><kbd>Space</kbd> 뒤집기 · <kbd>1</kbd> 다시 · <kbd>2</kbd> 애매 · <kbd>3</kbd> 알아요 · <kbd>S</kbd> 발음</p>
+</div>
+</aside>
+</div>
+</div>
+</section>
+
+<section class="band lower">
+<div class="wrap cols">
+<div class="panel">
+<h2>표현 목록</h2>
+<input id="q" type="search" placeholder="영어나 한국어로 찾기" aria-label="표현 검색">
+<div class="list" id="list"></div>
+</div>
+<div class="panel">
+<h2>내 카드 추가</h2>
+<form id="add">
+<label for="fEn">영어 표현 *</label><input id="fEn" required placeholder="It's a long shot.">
+<label for="fKo">뜻 *</label><input id="fKo" required placeholder="가능성은 낮지만 해 볼 만해.">
+<label for="fEx">예문</label><input id="fEx" placeholder="It's a long shot, but let's apply anyway.">
+<label for="fExKo">예문 해석</label><input id="fExKo" placeholder="가능성은 낮지만 그래도 지원해 보자.">
+<label for="fNote">뉘앙스 메모</label><input id="fNote" placeholder="성공 확률이 낮을 때">
+<button class="primary" type="submit">카드 추가하기</button>
+<p class="ok" id="addMsg" role="status"></p>
+</form>
+<details>
+<summary>기록 백업 · 복원 · 초기화</summary>
+<p class="foot" style="margin-top:6px">학습 기록은 이 기기에만 저장돼요. 홈 화면 앱과 Safari는 기록을 따로 보관하니, 옮길 때는 백업 코드를 복사해 붙여 넣으세요.</p>
+<button id="copy">백업 코드 복사</button>
+<label for="restore">백업 코드 붙여넣기</label>
+<textarea id="restore" rows="3"></textarea>
+<div class="row" style="margin-top:8px"><button id="load">복원하기</button><button id="reset">기록 초기화</button></div>
+<p class="ok" id="bkMsg" role="status"></p>
+</details>
+</div>
+</div>
+<p class="wrap foot">기본 카드 72장 · 단계가 오를수록 1일, 3일, 7일, 14일, 30일 뒤에 다시 나와요.</p>
+</section>
+
+<script>
+{
+const D=[
+["일상","I'm running late.","나 좀 늦을 것 같아.","Sorry, I'm running late. Be there in ten.","미안, 좀 늦어. 10분 안에 갈게.","이미 늦어지는 중일 때. 약속 직전 문자에 딱."],
+["일상","I'll grab a coffee.","커피 한 잔 사 올게.","I'll grab a coffee before the meeting.","회의 전에 커피 한 잔 사 올게.","grab = 가볍게 사다, 먹다. grab lunch, grab a bite."],
+["일상","I'm beat.","완전 녹초야.","I'm beat. I'm going straight to bed.","완전 녹초야. 바로 잘래.","tired보다 훨씬 지친 느낌."],
+["일상","Let's call it a day.","오늘은 여기까지 하자.","It's almost nine. Let's call it a day.","벌써 9시네. 오늘은 여기까지 하자.","일이나 공부를 마무리할 때."],
+["일상","I'm down.","나 콜, 좋아.","Pizza tonight? I'm down.","오늘 밤 피자? 나 콜.","제안에 끼겠다는 캐주얼한 대답. I'm down for that."],
+["일상","Can I take a rain check?","다음으로 미뤄도 될까?","I'm swamped tonight. Can I take a rain check?","오늘 밤은 바빠서. 다음에 해도 될까?","거절이지만 다음엔 꼭 하자는 뜻."],
+["일상","It's on me.","이건 내가 낼게.","Put your wallet away. It's on me.","지갑 넣어. 내가 낼게.","This one's on me. 도 자주 써요."],
+["일상","I'm good, thanks.","전 괜찮아요. (사양)","Want some more? I'm good, thanks.","더 먹을래? 난 괜찮아, 고마워.","No thank you보다 가볍고 자연스러운 거절."],
+["일상","Long time no see.","오랜만이야.","Long time no see! How have you been?","오랜만이야! 어떻게 지냈어?","친한 사이에서 쓰는 인사."],
+["일상","What have you been up to?","요즘 뭐 하고 지냈어?","So what have you been up to lately?","그래서 요즘 뭐 하고 지냈어?","근황을 물을 때. 대답은 Not much. 도 흔해요."],
+["일상","I'm heading out.","나 이제 나갈게.","I'm heading out. See you tomorrow!","나 간다. 내일 봐!","퇴근하거나 자리를 뜰 때."],
+["일상","Make yourself at home.","편하게 있어.","Come in, make yourself at home.","들어와, 편하게 있어.","손님을 집에 들일 때."],
+["리액션","That makes sense.","아, 그래서 그렇구나.","Oh, that makes sense. Thanks for explaining.","아, 이제 이해돼. 설명해 줘서 고마워.","설명을 듣고 납득했을 때."],
+["리액션","No way!","말도 안 돼! 진짜?","You got the job? No way!","너 합격했어? 대박, 진짜?","놀람·반가움. 강한 거절(절대 안 돼)로도 써요."],
+["리액션","Tell me about it.","내 말이 그 말이야.","This traffic is awful. Tell me about it.","차 진짜 막힌다. 내 말이.","말해 보라는 뜻이 아니라 강한 맞장구."],
+["리액션","I feel you.","무슨 마음인지 알아.","Mondays are tough. I feel you.","월요일 힘들지. 그 마음 알아.","친구 사이 공감. I hear you. 도 비슷."],
+["리액션","That's a bummer.","아, 아쉽다.","The concert got canceled? That's a bummer.","콘서트 취소됐어? 아 아쉽다.","가벼운 실망. 심각한 일에는 안 써요."],
+["리액션","I'm stoked.","완전 신나!","I'm so stoked for the trip.","여행 진짜 기대돼.","excited보다 캐주얼, 미국 서부 느낌."],
+["리액션","You made my day.","덕분에 오늘 기분 최고야.","Thanks for the coffee. You made my day!","커피 고마워. 덕분에 하루가 행복해!","작은 친절에 고마움을 크게 표현."],
+["리액션","It's not a big deal.","별일 아니야.","Don't apologize. It's not a big deal.","사과하지 마. 별거 아니야.","No big deal. 로 줄여 말해요."],
+["리액션","I'm over it.","이젠 신경 안 써.","That was months ago. I'm over it.","그거 몇 달 전 일이야. 이제 다 잊었어.","지나간 일에서 마음이 떠났을 때."],
+["리액션","Good for you!","잘됐다!","You finally quit smoking? Good for you!","드디어 담배 끊었어? 잘했다!","상대의 성취를 칭찬할 때. 비꼬는 억양 주의."],
+["리액션","Fair enough.","그럴 만하네.","You want to leave early? Fair enough.","일찍 가고 싶다고? 그럴 수 있지.","상대 의견을 일리 있다고 받아들일 때."],
+["리액션","I'm all ears.","잘 듣고 있어, 말해 봐.","You have an idea? I'm all ears.","아이디어 있다고? 말해 봐, 듣고 있어.","관심 있게 들을 준비가 됐다는 뜻."],
+["직장","Let's touch base.","잠깐 얘기 좀 나누자.","Let's touch base after lunch.","점심 먹고 잠깐 얘기하자.","짧게 진행 상황을 맞춰볼 때."],
+["직장","Keep me posted.","진행 상황 계속 알려줘.","Keep me posted on the client's reply.","고객 답장 오면 알려줘.","Keep me updated. 와 같은 뜻."],
+["직장","I'm swamped.","일이 산더미야.","Sorry, I'm swamped this week.","미안, 이번 주 일이 너무 많아.","very busy의 자연스러운 표현."],
+["직장","Let's circle back to this.","이건 나중에 다시 얘기해요.","Good point. Let's circle back to this next week.","좋은 지적이에요. 다음 주에 다시 얘기해요.","회의에서 지금 결론 내지 않을 때."],
+["직장","Are we on the same page?","우리 같은 생각인 거 맞죠?","Before we start, are we on the same page?","시작 전에, 다들 이해한 거 같죠?","이해·목표가 일치하는지 확인."],
+["직장","It's not my call.","제가 결정할 일이 아니에요.","I'd love to, but it's not my call.","저도 그러고 싶지만 제 권한이 아니에요.","call = 결정, 판단. Your call. 은 네가 정해."],
+["직장","I'll get back to you.","확인하고 다시 연락드릴게요.","Let me check and get back to you.","확인해 보고 다시 말씀드릴게요.","바로 답하기 어려울 때 예의 있게."],
+["직장","Can you walk me through it?","차근차근 설명해 줄래요?","Can you walk me through the new process?","새 절차 하나씩 설명해 줄래요?","단계별로 안내해 달라는 부탁."],
+["직장","Just a heads-up.","미리 알려드려요.","Just a heads-up, the meeting moved to 3.","미리 말씀드리면, 회의가 3시로 바뀌었어요.","공지·주의를 가볍게 전할 때."],
+["직장","I'm on it.","바로 할게요.","The report? I'm on it.","보고서요? 바로 처리할게요.","맡은 일을 바로 시작한다는 짧은 대답."],
+["직장","Give me a ballpark.","대략 얼마쯤이에요?","I know it's early, but give me a ballpark.","아직 이르지만 대충 얼마일까요?","ballpark figure = 어림잡은 숫자."],
+["직장","Let's take this offline.","이건 따로 얘기해요.","This is getting detailed. Let's take this offline.","얘기가 길어지네요. 따로 얘기해요.","회의 중 소수끼리 나중에 논의하자는 뜻."],
+["부탁·제안","Do you mind if I open the window?","창문 좀 열어도 될까요?","Do you mind if I open the window? Not at all.","창문 열어도 될까요? 그럼요.","Not at all, Go ahead가 허락. Yes는 싫다는 뜻."],
+["부탁·제안","Could you do me a favor?","부탁 하나만 들어줄래?","Could you do me a favor and water my plants?","부탁인데 화분에 물 좀 줄래?","Can you do me a favor? 도 자연스러워요."],
+["부탁·제안","How about we order in?","배달시켜 먹는 거 어때?","I'm tired. How about we order in tonight?","피곤해. 오늘은 시켜 먹을까?","How about we + 동사원형으로 제안."],
+["부탁·제안","Are you up for a movie?","영화 볼 생각 있어?","Are you up for a movie tonight?","오늘 밤 영화 볼래?","up for = 할 마음이 있는."],
+["부탁·제안","I was wondering if you could help.","혹시 도와주실 수 있을까 해서요.","I was wondering if you could review my draft.","혹시 제 초안 좀 봐주실 수 있을까요?","과거 진행형이 훨씬 공손하게 들려요."],
+["부탁·제안","Feel free to ask.","편하게 물어보세요.","If anything's unclear, feel free to ask.","모르는 거 있으면 편하게 물어보세요.","Feel free to + 동사원형."],
+["부탁·제안","Let's play it by ear.","상황 봐서 하자.","Not sure about the weather. Let's play it by ear.","날씨가 애매하네. 상황 봐서 정하자.","계획 없이 그때그때 결정."],
+["부탁·제안","Mind if I join you?","같이 앉아도 될까요?","Mind if I join you? Sure, have a seat.","같이 앉아도 돼요? 그럼요, 앉으세요.","Do you mind if I를 줄인 캐주얼 형태."],
+["부탁·제안","Can I get a latte?","라테 하나 주세요.","Can I get a large latte to go?","라지 라테 하나 포장이요.","주문할 때 I want보다 훨씬 자연스러움."],
+["부탁·제안","Could we get the check?","계산서 주시겠어요?","Excuse me, could we get the check?","저기요, 계산서 주시겠어요?","영국에서는 the bill."],
+["부탁·제안","It's up to you.","네가 정해.","Italian or Thai? It's up to you.","이탈리안 아니면 태국 음식? 네가 골라.","결정권을 상대에게 넘길 때."],
+["부탁·제안","Whatever works for you.","너 편한 대로 해.","Tuesday or Wednesday, whatever works for you.","화요일이든 수요일이든 편한 날로.","일정 잡을 때 자주 써요."],
+["대화 잇기","By the way","그건 그렇고","By the way, did you call your mom?","그건 그렇고, 엄마한테 전화했어?","화제를 바꿀 때. 문자로 BTW."],
+["대화 잇기","Speaking of which","말 나온 김에","Speaking of which, are you free Friday?","말 나온 김에, 금요일에 시간 돼?","방금 나온 주제와 연결할 때."],
+["대화 잇기","To be honest","솔직히 말하면","To be honest, I didn't like the movie.","솔직히 그 영화 별로였어.","Honestly, 로 짧게도 써요. 문자로 TBH."],
+["대화 잇기","Long story short","간단히 말하면","Long story short, we missed the flight.","한마디로, 우리 비행기 놓쳤어.","긴 얘기를 결론만 말할 때."],
+["대화 잇기","That being said","그렇긴 하지만","It's pricey. That being said, it's worth it.","비싸긴 해. 그렇긴 한데 그만한 가치가 있어.","앞말을 인정하고 반대 측면을 말할 때."],
+["대화 잇기","You know what I mean?","무슨 말인지 알지?","It's just not my vibe, you know what I mean?","그냥 내 스타일이 아니야, 알지?","말끝에 붙여 공감을 구해요."],
+["대화 잇기","Come to think of it","생각해 보니","Come to think of it, I haven't eaten all day.","생각해 보니 하루 종일 아무것도 안 먹었네.","말하다가 문득 깨달았을 때."],
+["대화 잇기","Let me think.","잠깐 생각 좀 해 볼게.","Where did I park? Let me think.","어디 주차했더라? 잠깐만.","바로 대답이 안 나올 때. Let me see. 도 비슷."],
+["대화 잇기","Where was I?","내가 어디까지 얘기했지?","Sorry, my phone. Where was I?","미안, 전화가 와서. 어디까지 얘기했지?","말이 끊긴 뒤 다시 이어갈 때."],
+["대화 잇기","That reminds me","아, 그러고 보니","That reminds me, I owe you twenty bucks.","아 그러고 보니, 너한테 20달러 빚졌지.","상대 말 덕분에 뭔가 떠올랐을 때."],
+["대화 잇기","Anyway","아무튼","Anyway, enough about me. How are you?","아무튼, 내 얘기는 그만. 넌 어때?","화제를 정리하거나 본론으로 돌아갈 때."],
+["대화 잇기","What do you mean?","무슨 뜻이야?","What do you mean you're moving?","이사 간다니 무슨 말이야?","놀라서 되물을 때도 써요."],
+["캐주얼","It's a no-brainer.","고민할 필요도 없지.","Free upgrade? It's a no-brainer.","무료 업그레이드? 당연히 해야지.","답이 너무 뻔할 때."],
+["캐주얼","Hang in there.","조금만 버텨, 힘내.","Exams are almost over. Hang in there!","시험 거의 끝났어. 조금만 힘내!","힘든 상황을 견디는 사람에게."],
+["캐주얼","My bad.","내 실수야, 미안.","Oh, that's your seat? My bad.","아, 거기 네 자리야? 미안.","가벼운 실수에. 진지한 사과엔 I'm sorry."],
+["캐주얼","I'll pass.","난 됐어, 패스.","Karaoke? I think I'll pass tonight.","노래방? 오늘은 난 패스할게.","초대를 가볍게 거절."],
+["캐주얼","Same here.","나도 그래.","I'm starving. Same here.","배고파 죽겠어. 나도.","Me too보다 살짝 더 자연스러운 맞장구."],
+["캐주얼","It slipped my mind.","깜빡했어.","Sorry, your birthday slipped my mind.","미안, 네 생일을 깜빡했어.","I forgot보다 부드럽게 들려요."],
+["캐주얼","Break a leg!","잘해, 행운을 빌어!","Your audition's today? Break a leg!","오늘 오디션이야? 잘하고 와!","공연·발표 전에. Good luck 대신."],
+["캐주얼","It's a piece of cake.","식은 죽 먹기야.","Don't worry, the test is a piece of cake.","걱정 마, 시험 엄청 쉬워.","아주 쉬운 일."],
+["캐주얼","Don't sweat it.","신경 쓰지 마.","You forgot to call? Don't sweat it.","전화 깜빡했다고? 괜찮아.","사과하는 상대를 안심시킬 때."],
+["캐주얼","Sounds good.","좋아, 그렇게 하자.","Meet at seven? Sounds good.","7시에 만나? 좋아.","제안에 동의하는 가장 흔한 대답."],
+["캐주얼","You bet.","당연하지.","Can you come? You bet!","올 수 있어? 당연하지!","Thanks에 대한 답으로 천만에의 뜻도."],
+["캐주얼","Just kidding.","농담이야.","I ate your cake. Just kidding!","네 케이크 내가 먹었어. 농담이야!","문자로 JK."]
+];
+const CATS=["전체","일상","리액션","직장","부탁·제안","대화 잇기","캐주얼","내 카드"];
+const IV=[0,1,3,7,14,30];
+const LV=["새 카드","1단계","2단계","3단계","4단계","5단계"];
+const KEY="native-cards-v1";
+const SPK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>';
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const today=()=>Math.floor((Date.now()-new Date().getTimezoneOffset()*60000)/86400000);
+let S={p:{},custom:[],streak:{last:-1,n:0},dir:"en",cat:"전체"};
+const restoreState=raw=>{const o=JSON.parse(raw);if(!o||typeof o!=="object"||typeof o.p!=="object")throw 0;S={...S,...o,custom:Array.isArray(o.custom)?o.custom:[]};};
+try{const raw=localStorage.getItem(KEY);if(raw)restoreState(raw);}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const canSpeak="speechSynthesis" in window;
+const say=t=>{if(!canSpeak)return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang="en-US";u.rate=.92;const v=speechSynthesis.getVoices().find(x=>x.lang==="en-US"&&/Samantha|Ava|Allison|Google US/.test(x.name))||speechSynthesis.getVoices().find(x=>x.lang==="en-US");if(v)u.voice=v;speechSynthesis.speak(u)}catch(e){}};
+const all=()=>[...D.map((d,i)=>({id:"b"+i,cat:d[0],en:d[1],ko:d[2],ex:d[3],exKo:d[4],note:d[5]})),...S.custom.map(c=>({...c,cat:"내 카드"}))];
+const prog=id=>S.p[id]||{b:0,d:0};
+const inCat=c=>S.cat==="전체"||c.cat===S.cat;
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+let queue=[],flipped=false,cram=false,hist=[],total=0;
+const build=()=>{const t=today(),list=all().filter(inCat);
+ if(cram){queue=shuffle(list.slice())}else{const due=list.filter(c=>prog(c.id).d<=t);
+  queue=[...due.filter(c=>prog(c.id).b>0).sort((a,b)=>prog(a.id).d-prog(b.id).d),...shuffle(due.filter(c=>prog(c.id).b===0))]}
+ total=queue.length;flipped=false;hist=[];};
+const lv=b=>'<span class="lv" aria-label="'+LV[b]+'">'+[1,2,3,4,5].map(i=>'<i class="'+(i<=b?"on":"")+'"></i>').join("")+"</span>";
+const sayBtn=(t,label,cls)=>canSpeak?'<button class="say '+(cls||"")+'" data-say="'+esc(t)+'" aria-label="'+esc(label)+'">'+SPK+(cls?"":" "+label)+"</button>":"";
+const exBlock=c=>c.ex?'<p class="ex"><span class="e">'+esc(c.ex)+"</span>"+sayBtn(c.ex,"예문 듣기","mini")+(c.exKo?'<span class="k">'+esc(c.exKo)+"</span>":"")+"</p>":"";
+function renderCard(){const st=$("stage"),c=queue[0];
+ if(!c){const t=today(),list=all().filter(inCat),next=list.filter(x=>prog(x.id).d===t+1).length;
+  st.innerHTML='<div class="done"><h2>'+(cram?"한 바퀴 끝!":"오늘 분량 끝!")+'</h2><p class="sub">'+(list.length?(cram?"기록 없이 전체를 훑어봤어요.":"내일 다시 볼 카드 "+next+"장. 잊을 때쯤 다시 불러올게요."):"이 묶음에는 아직 카드가 없어요. 아래에서 직접 추가해 보세요.")+'</p>'+(list.length?'<p><button class="reveal" id="cramBtn">'+(cram?"한 번 더 훑어보기":"이 묶음 자유 복습 (기록 안 함)")+"</button></p>":"")+"</div>";
+  $("actions").innerHTML="";$("pos").textContent="";return}
+ const p=prog(c.id),tag='<div class="tag"><span>'+esc(c.cat)+"</span>"+lv(p.b)+(cram?"<span>자유 복습</span>":"")+"</div>";
+ const front=S.dir==="en"?tag+'<div class="big">'+esc(c.en)+"</div>"+sayBtn(c.en,"발음 듣기")+'<p class="hint">카드를 누르거나 스페이스바로 뜻 보기</p>'
+  :tag+'<div class="koBig">'+esc(c.ko)+"</div>"+(c.exKo?'<p class="ex"><span class="k">'+esc(c.exKo)+"</span></p>":"")+'<p class="hint">영어로 어떻게 말할지 떠올린 뒤 뒤집어 보세요</p>';
+ const back=S.dir==="en"?tag+'<div class="e2">'+esc(c.en)+'</div><div class="ko">'+esc(c.ko)+"</div>"+exBlock(c)+(c.note?'<p class="note">'+esc(c.note)+"</p>":"")
+  :tag+'<div class="big" style="margin-top:14px">'+esc(c.en)+"</div>"+sayBtn(c.en,"발음 듣기")+exBlock(c)+(c.note?'<p class="note">'+esc(c.note)+"</p>":"");
+ st.innerHTML='<div class="card'+(flipped?" flip":"")+'" id="card" tabindex="0" role="button" aria-label="카드 뒤집기"><div class="face front" aria-hidden="'+flipped+'">'+front+'</div><div class="face back" aria-hidden="'+!flipped+'">'+back+"</div></div>";
+ renderActions();$("pos").textContent=(total-queue.length+1)+" / "+total+"번째 카드";}
+function renderActions(){const c=queue[0];if(!c)return;const p=prog(c.id),nb=Math.min(5,p.b+1);
+ $("actions").innerHTML=flipped?'<button class="g1" data-g="1">다시<small>오늘 또</small></button><button class="g2" data-g="2">애매해요<small>내일</small></button><button class="g3" data-g="3">알아요<small>'+(cram?"기록 안 함":IV[nb]+"일 뒤")+"</small></button>":'<button class="reveal" id="flipBtn">뜻 확인하기</button>';}
+function flip(){if(!queue[0])return;flipped=!flipped;const el=$("card");if(el){el.classList.toggle("flip",flipped);el.children[0].setAttribute("aria-hidden",flipped);el.children[1].setAttribute("aria-hidden",!flipped)}renderActions();}
+function grade(g){const c=queue[0];if(!c||!flipped)return;const t=today();
+ hist.push({q:queue.slice(),tot:total,id:c.id,p:S.p[c.id]?{...S.p[c.id]}:null,st:{...S.streak}});
+ queue.shift();
+ if(g===1)queue.splice(Math.min(3,queue.length),0,c);
+ if(!cram){const p=prog(c.id);
+  S.p[c.id]=g===1?{b:1,d:t}:g===2?{b:Math.max(1,p.b),d:t+1}:(()=>{const nb=Math.min(5,p.b+1);return{b:nb,d:t+IV[nb]}})();
+  if(S.streak.last!==t){S.streak={last:t,n:S.streak.last===t-1?S.streak.n+1:1}}save();}
+ if(g===1)total++;flipped=false;render();}
+function undo(){const h=hist.pop();if(!h)return;queue=h.q;if(!cram){if(h.p)S.p[h.id]=h.p;else delete S.p[h.id];S.streak=h.st;save()}total=h.tot;flipped=true;render();}
+function renderStats(){const t=today(),list=all();
+ $("sDue").textContent=cram?"–":String(queue.length);
+ $("sKnown").textContent=list.filter(c=>prog(c.id).b>=3).length+" / "+list.length;
+ $("sStreak").textContent=(S.streak.last>=t-1?S.streak.n:0)+"일";
+ const inc=list.filter(inCat),cnt=[0,0,0,0,0,0];inc.forEach(c=>cnt[prog(c.id).b]++);const mx=Math.max(1,...cnt);
+ $("boxes").innerHTML=cnt.map((n,i)=>'<div class="box"><span>'+LV[i]+(i?" · "+IV[i]+"일":"")+'</span><div class="bar"><i style="width:'+(n/mx*100)+'%"></i></div><b>'+n+"</b></div>").join("");
+ $("undo").disabled=!hist.length;}
+function renderChips(){$("chips").innerHTML=CATS.map(c=>'<button class="chip" data-cat="'+c+'" aria-pressed="'+(S.cat===c)+'">'+c+"</button>").join("");$("dirEn").setAttribute("aria-pressed",S.dir==="en");$("dirKo").setAttribute("aria-pressed",S.dir==="ko");}
+function renderList(){const q=$("q").value.trim().toLowerCase(),list=all().filter(inCat).filter(c=>!q||(c.en+" "+c.ko).toLowerCase().includes(q));
+ $("list").innerHTML=list.length?list.map(c=>'<div class="item"><div><div class="e">'+esc(c.en)+'</div><div class="k">'+esc(c.ko)+"</div></div>"+lv(prog(c.id).b)+'<div class="acts">'+sayBtn(c.en,c.en+" 듣기","mini")+'<button data-study="'+esc(c.id)+'">공부</button>'+(c.id[0]==="c"?'<button data-del="'+esc(c.id)+'">삭제</button>':"")+"</div></div>").join(""):'<p class="empty">'+(q?"찾는 표현이 없어요.":"이 묶음은 비어 있어요. 오른쪽에서 카드를 추가해 보세요.")+"</p>";}
+function render(){renderChips();renderCard();renderStats();renderList();}
+document.addEventListener("click",e=>{const b=e.target.closest("button,.card");if(!b)return;
+ if(b.dataset.say!==undefined){e.stopPropagation();say(b.dataset.say);return}
+ if(b.dataset.cat){S.cat=b.dataset.cat;cram=false;save();build();render();return}
+ if(b.dataset.g){grade(+b.dataset.g);return}
+ if(b.dataset.study){const c=all().find(x=>x.id===b.dataset.study);if(!c)return;queue=queue.filter(x=>x.id!==c.id);queue.unshift(c);total=Math.max(total,queue.length);flipped=false;render();$("stage").scrollIntoView({behavior:"smooth",block:"center"});return}
+ if(b.dataset.del){S.custom=S.custom.filter(x=>x.id!==b.dataset.del);delete S.p[b.dataset.del];queue=queue.filter(x=>x.id!==b.dataset.del);save();render();return}
+ if(b.id==="card"||b.id==="flipBtn"){flip();return}
+ if(b.id==="cramBtn"){cram=true;build();render();return}
+});
+$("dirEn").onclick=()=>{S.dir="en";flipped=false;save();render()};
+$("dirKo").onclick=()=>{S.dir="ko";flipped=false;save();render()};
+$("undo").onclick=undo;
+$("shuffle").onclick=()=>{shuffle(queue);flipped=false;render()};
+$("q").oninput=renderList;
+$("add").onsubmit=e=>{e.preventDefault();const v=id=>$(id).value.trim();if(!v("fEn")||!v("fKo"))return;
+ const c={id:"c"+Date.now(),en:v("fEn"),ko:v("fKo"),ex:v("fEx"),exKo:v("fExKo"),note:v("fNote")};S.custom.push(c);save();
+ ["fEn","fKo","fEx","fExKo","fNote"].forEach(id=>$(id).value="");$("addMsg").textContent="‘"+c.en+"’ 카드를 내 카드에 추가했어요.";
+ if(!cram&&(S.cat==="전체"||S.cat==="내 카드")){queue.push({...c,cat:"내 카드"});total++}render();};
+$("copy").onclick=async()=>{const txt=JSON.stringify(S);$("restore").value=txt;try{await navigator.clipboard.writeText(txt);$("bkMsg").textContent="백업 코드를 복사했어요. 메모장 등에 붙여 두세요."}catch(e){$("bkMsg").textContent="자동 복사가 막혀 있어요. 아래 칸의 코드를 직접 복사해 주세요."}};
+$("load").onclick=()=>{try{restoreState($("restore").value);save();cram=false;build();render();$("bkMsg").textContent="기록을 복원했어요."}catch(e){$("bkMsg").textContent="코드가 올바르지 않아요. 복사한 코드 전체를 붙여 넣어 주세요."}};
+let armed=false;$("reset").onclick=()=>{if(!armed){armed=true;$("reset").textContent="정말 지울까요? 한 번 더 누르기";setTimeout(()=>{armed=false;$("reset").textContent="기록 초기화"},4000);return}
+ armed=false;S.p={};S.streak={last:-1,n:0};save();cram=false;build();render();$("reset").textContent="기록 초기화";$("bkMsg").textContent="학습 기록을 지웠어요. 직접 만든 카드는 남아 있어요."};
+document.addEventListener("keydown",e=>{if(e.target.closest("input,textarea,summary")||(e.key===" "&&e.target.closest("button"))||e.metaKey||e.ctrlKey||e.altKey)return;
+ if(e.key===" "||(e.key==="Enter"&&e.target.id==="card")){e.preventDefault();flip()}
+ else if(["1","2","3"].includes(e.key))grade(+e.key);
+ else if(e.key.toLowerCase()==="s"&&queue[0])say(queue[0].en);});
+build();render();
+if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+}
+</script>
+</body>
+</html>
